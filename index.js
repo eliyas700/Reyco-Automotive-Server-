@@ -43,6 +43,7 @@ async function run() {
       .db("reyco-automotive")
       .collection("products");
     const usersCollection = client.db("reyco-automotive").collection("users");
+    const ordersCollection = client.db("reyco-automotive").collection("orders");
 
     //Check Whether the user Was Previously logged in or Not
     app.put("/user/:email", async (req, res) => {
@@ -77,6 +78,40 @@ async function run() {
       const query = { _id: ObjectId(id) };
       const product = await productsCollection.findOne(query);
       res.send(product);
+    });
+    //Add a Order
+    app.post("/orders", async (req, res) => {
+      const order = req.body;
+      const query = {
+        name: order.name,
+      };
+      const exists = await ordersCollection.findOne(query);
+      if (exists) {
+        return res.send({ success: false, order: exists });
+      }
+      const result = await ordersCollection.insertOne(order);
+      return res.send({ success: true, result });
+    });
+
+    //Update Specific Product after Payment
+    app.put("/products/:id", async (req, res) => {
+      const id = req.params.id;
+      const updateProduct = req.body;
+      const filter = { _id: ObjectId(id) };
+      const option = { upsert: true };
+      console.log(updateProduct.Quantity);
+      const updateDoc = {
+        $set: {
+          available: updateProduct.Quantity,
+          totalSell: updateProduct.Sale,
+        },
+      };
+      const result = await productsCollection.updateOne(
+        filter,
+        updateDoc,
+        option
+      );
+      res.send(result);
     });
   } finally {
   }
