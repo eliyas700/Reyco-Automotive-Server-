@@ -44,19 +44,12 @@ async function run() {
       .collection("products");
     const usersCollection = client.db("reyco-automotive").collection("users");
 
-    //Get All The Products
-    app.get("/products", verifyJWT, async (req, res) => {
-      const query = {};
-      const cursor = productsCollection.find(query);
-      const products = await cursor.toArray();
-      res.send(products);
-    });
-
     //Check Whether the user Was Previously logged in or Not
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
       const user = req.body;
       const filter = { email: email };
+      //If the user is not existed it will add
       const options = { upsert: true };
       const updateDoc = {
         $set: user,
@@ -67,9 +60,23 @@ async function run() {
         options
       );
       const token = jwt.sign({ email: email }, process.env.MY_ACCESS_TOKEN, {
-        expiresIn: "7d",
+        expiresIn: "15d",
       });
       res.send({ result, token });
+    });
+    //Get All The Products
+    app.get("/products", async (req, res) => {
+      const query = {};
+      const cursor = productsCollection.find(query);
+      const products = await cursor.toArray();
+      res.send(products);
+    });
+    //Load a Specific Product Detail
+    app.get("/products/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const product = await productsCollection.findOne(query);
+      res.send(product);
     });
   } finally {
   }
