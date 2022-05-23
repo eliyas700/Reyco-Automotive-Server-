@@ -84,6 +84,7 @@ async function run() {
       const order = req.body;
       const query = {
         name: order.name,
+        userEmail: order.userEmail,
       };
       const exists = await ordersCollection.findOne(query);
       if (exists) {
@@ -92,7 +93,25 @@ async function run() {
       const result = await ordersCollection.insertOne(order);
       return res.send({ success: true, result });
     });
-
+    //Get All the orders for a Specific User
+    app.get("/orders", verifyJWT, async (req, res) => {
+      //Requested Email
+      const userEmail = req.query.userEmail;
+      console.log(userEmail);
+      // const authorization = req.headers.authorization;
+      // console.log(authorization);
+      // Give the information's to the Exact(Right) user,Dont give other Users Info
+      const decodedEmail = req.decoded.email;
+      if (userEmail === decodedEmail) {
+        const query = { userEmail: userEmail };
+        const orders = await ordersCollection.find(query).toArray();
+        res.send(orders);
+      } else {
+        return res
+          .status(403)
+          .send({ message: "Forbidden Access! you aren't the right user" });
+      }
+    });
     //Update Specific Product after Payment
     app.put("/products/:id", async (req, res) => {
       const id = req.params.id;
