@@ -70,12 +70,17 @@ async function run() {
     });
 
     //Get All Reviews From DB
-    //Get All The Products
     app.get("/reviews", async (req, res) => {
       const query = {};
       const cursor = reviewsCollection.find(query);
       const reviews = await cursor.toArray();
       res.send(reviews);
+    });
+    //Add a Review to DB
+    app.post("/reviews", async (req, res) => {
+      const review = req.body;
+      const result = await reviewsCollection.insertOne(review);
+      return res.send(result);
     });
     //Get All The Products
     app.get("/products", async (req, res) => {
