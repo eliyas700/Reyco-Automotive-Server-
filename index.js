@@ -44,6 +44,9 @@ async function run() {
       .collection("products");
     const usersCollection = client.db("reyco-automotive").collection("users");
     const ordersCollection = client.db("reyco-automotive").collection("orders");
+    const reviewsCollection = client
+      .db("reyco-automotive")
+      .collection("reviews");
 
     //Check Whether the user Was Previously logged in or Not
     app.put("/user/:email", async (req, res) => {
@@ -64,6 +67,15 @@ async function run() {
         expiresIn: "15d",
       });
       res.send({ result, token });
+    });
+
+    //Get All Reviews From DB
+    //Get All The Products
+    app.get("/reviews", async (req, res) => {
+      const query = {};
+      const cursor = reviewsCollection.find(query);
+      const reviews = await cursor.toArray();
+      res.send(reviews);
     });
     //Get All The Products
     app.get("/products", async (req, res) => {
@@ -93,6 +105,7 @@ async function run() {
       const result = await ordersCollection.insertOne(order);
       return res.send({ success: true, result });
     });
+
     //Get All the orders for a Specific User
     app.get("/orders", verifyJWT, async (req, res) => {
       //Requested Email
