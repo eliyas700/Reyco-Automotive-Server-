@@ -47,7 +47,19 @@ async function run() {
     const reviewsCollection = client
       .db("reyco-automotive")
       .collection("reviews");
-
+    //Verify Admin
+    const verifyAdmin = async (req, res, next) => {
+      //Requester who want to Make another User an Admin
+      const requester = req.decoded.email;
+      const requesterAccount = await usersCollection.findOne({
+        email: requester,
+      });
+      if (requesterAccount.role === "admin") {
+        next();
+      } else {
+        res.status(403).send({ message: "Forbidden,You dont have the power" });
+      }
+    };
     //Check Whether the user Was Previously logged in or Not
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
@@ -68,11 +80,13 @@ async function run() {
       });
       res.send({ result, token });
     });
+
     //get all users
     app.get("/user", async (req, res) => {
       const users = await usersCollection.find().toArray();
       res.send(users);
     });
+
     //Make a specific user to Admin
     app.put("/user/admin/:email", verifyJWT, async (req, res) => {
       //The user Whom want to make admin
@@ -93,6 +107,16 @@ async function run() {
         res.status(403).send({ message: "forbidden,You dont have the power" });
       }
     });
+
+    //Check a User Adminability
+    app.get("/admin/:email", async (req, res) => {
+      const email = req.params.email;
+      const user = await usersCollection.findOne({ email: email });
+      const isAdmin = user.role === "admin";
+
+      res.send({ admin: isAdmin });
+    });
+
     //Get All Reviews From DB
     app.get("/reviews", async (req, res) => {
       const query = {};
@@ -120,6 +144,14 @@ async function run() {
       const product = await productsCollection.findOne(query);
       res.send(product);
     });
+    //Add a product
+    //Send Doctors Information's to Data Base
+    app.post("/products", verifyJWT, verifyAdmin, async (req, res) => {
+      const product = req.body;
+      const result = await productsCollection.insertOne(product);
+      res.send(result);
+    });
+
     //Add a Order
     app.post("/orders", async (req, res) => {
       const order = req.body;
