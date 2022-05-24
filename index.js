@@ -166,7 +166,13 @@ async function run() {
       const result = await ordersCollection.insertOne(order);
       return res.send({ success: true, result });
     });
-
+    //Get All Orders From DB
+    app.get("/orders", async (req, res) => {
+      const query = {};
+      const cursor = ordersCollection.find(query);
+      const orders = await cursor.toArray();
+      res.send(orders);
+    });
     //Get All the orders for a Specific User
     app.get("/orders", verifyJWT, async (req, res) => {
       //Requested Email
