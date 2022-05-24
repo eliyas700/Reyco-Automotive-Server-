@@ -68,7 +68,31 @@ async function run() {
       });
       res.send({ result, token });
     });
-
+    //get all users
+    app.get("/user", async (req, res) => {
+      const users = await usersCollection.find().toArray();
+      res.send(users);
+    });
+    //Make a specific user to Admin
+    app.put("/user/admin/:email", verifyJWT, async (req, res) => {
+      //The user Whom want to make admin
+      const email = req.params.email;
+      //Requester who want to Make another User an Admin
+      const requester = req.decoded.email;
+      const requesterAccount = await usersCollection.findOne({
+        email: requester,
+      });
+      if (requesterAccount.role === "admin") {
+        const filter = { email: email };
+        const updateDoc = {
+          $set: { role: "admin" },
+        };
+        const result = await usersCollection.updateOne(filter, updateDoc);
+        res.send(result);
+      } else {
+        res.status(403).send({ message: "forbidden,You dont have the power" });
+      }
+    });
     //Get All Reviews From DB
     app.get("/reviews", async (req, res) => {
       const query = {};
