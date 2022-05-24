@@ -192,6 +192,14 @@ async function run() {
           .send({ message: "Forbidden Access! you aren't the right user" });
       }
     });
+    //Delete a order from Db
+    app.delete("/orders/:id", verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const restOrders = await ordersCollection.deleteOne(filter);
+      res.send(restOrders);
+    });
+
     //Update Specific Product after Payment
     app.put("/products/:id", async (req, res) => {
       const id = req.params.id;
