@@ -151,7 +151,13 @@ async function run() {
       const result = await productsCollection.insertOne(product);
       res.send(result);
     });
-
+    //Delete a order from Db
+    app.delete("/products/:id", verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const restProducts = await productsCollection.deleteOne(filter);
+      res.send(restProducts);
+    });
     //Add a Order
     app.post("/orders", async (req, res) => {
       const order = req.body;
