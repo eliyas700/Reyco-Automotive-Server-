@@ -91,6 +91,7 @@ async function run() {
       const users = await usersCollection.find().toArray();
       res.send(users);
     });
+
     //Update A User Information
     app.put("/user", async (req, res) => {
       const email = req.query.email;
@@ -136,7 +137,13 @@ async function run() {
 
       res.send({ admin: isAdmin });
     });
-
+    //Delete a User from User Collection
+    app.delete("/users/:id", verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const restUsers = await usersCollection.deleteOne(filter);
+      res.send(restUsers);
+    });
     //Get All Reviews From DB
     app.get("/reviews", async (req, res) => {
       const query = {};
@@ -165,13 +172,12 @@ async function run() {
       res.send(product);
     });
     //Add a product
-    //Send Doctors Information's to Data Base
     app.post("/products", verifyJWT, verifyAdmin, async (req, res) => {
       const product = req.body;
       const result = await productsCollection.insertOne(product);
       res.send(result);
     });
-    //Delete a order from Db
+    //Delete a Product from Db
     app.delete("/products/:id", verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
