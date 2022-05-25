@@ -6,6 +6,7 @@ require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const { decode } = require("jsonwebtoken");
 const port = process.env.PORT || 5000;
+const stripe = require("stripe")(process.env.MY_PAYMENT_SECRET);
 //MiddleWare
 app.use(cors());
 app.use(express.json());
@@ -47,6 +48,10 @@ async function run() {
     const reviewsCollection = client
       .db("reyco-automotive")
       .collection("reviews");
+
+    const paymentCollection = client
+      .db("reyco-automotive")
+      .collection("payment");
     //Verify Admin
     const verifyAdmin = async (req, res, next) => {
       //Requester who want to Make another User an Admin
@@ -205,7 +210,13 @@ async function run() {
       const restOrders = await ordersCollection.deleteOne(filter);
       res.send(restOrders);
     });
-
+    //Get a Specific Product Information For Payment
+    app.get("/orders/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const order = await ordersCollection.findOne(query);
+      res.send(order);
+    });
     //Update Specific Product after Payment
     app.put("/products/:id", async (req, res) => {
       const id = req.params.id;
@@ -225,6 +236,42 @@ async function run() {
         option
       );
       res.send(result);
+    });
+
+    //Create Payment intent API(Get client Secret)
+    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
+      const service = req.body;
+      //Get the Price Amount
+      const price = service.totalBill;
+      //Convert to Poisha
+      const amount = price * 100;
+
+      // Create a PaymentIntent with the order amount and currency
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+
+    // Update Payment Status after Payment
+    app.patch("/orders/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const payment = req.body;
+      const filter = { _id: ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          payment: "paid",
+          transactionId: payment.transactionId,
+        },
+      };
+      const result = await paymentCollection.insertOne(payment);
+      const updatedOrder = await ordersCollection.updateOne(filter, updatedDoc);
+      res.send(updatedDoc);
     });
   } finally {
   }
