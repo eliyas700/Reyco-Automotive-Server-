@@ -294,6 +294,22 @@ async function run() {
       const updatedOrder = await ordersCollection.updateOne(filter, updatedDoc);
       res.send(updatedDoc);
     });
+
+    //Update status after shipment
+
+    app.patch("/ship/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const payment = req.body;
+      const filter = { _id: ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          status: payment.status,
+        },
+      };
+      const result = await paymentCollection.insertOne(payment);
+      const updatedOrder = await ordersCollection.updateOne(filter, updatedDoc);
+      res.send(updatedDoc);
+    });
   } finally {
   }
 }
