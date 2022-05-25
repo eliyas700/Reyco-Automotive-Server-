@@ -91,6 +91,21 @@ async function run() {
       const users = await usersCollection.find().toArray();
       res.send(users);
     });
+    //Update A User Information
+    app.put("/user", async (req, res) => {
+      const email = req.query.email;
+      const userInfos = req.body;
+      const filter = { email: email };
+      const option = { upsert: true };
+      console.log(email, "User New infos");
+      const updateDoc = {
+        $set: {
+          userInfos,
+        },
+      };
+      const result = await usersCollection.updateOne(filter, updateDoc, option);
+      res.send(result);
+    });
 
     //Make a specific user to Admin
     app.put("/user/admin/:email", verifyJWT, async (req, res) => {
