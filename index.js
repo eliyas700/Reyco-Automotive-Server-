@@ -206,7 +206,7 @@ async function run() {
       res.send(orders);
     });
     //Get All the orders for a Specific User
-    app.get("/orders", verifyJWT, async (req, res) => {
+    app.get("/order", verifyJWT, async (req, res) => {
       //Requested Email
       const userEmail = req.query.userEmail;
       console.log(userEmail);
